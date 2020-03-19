@@ -6,10 +6,25 @@ const PORT = 8080;
 app.use(cookieParser());
 app.set("view engine", "ejs");
 
+
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  "b2xVn2": { 
+    shortURL: "b2xVn2", 
+    longURL: "http://www.lighthouselabs.ca", 
+    userID: "aJ48lW"
+  },
+  "9sm5xK": { 
+    shortURL: "9sm5xK",
+    longURL: "http://www.google.com", 
+    userID: "aJ48lW"
+  }
 };
+
+// old database
+// const urlDatabase = {
+//   "b2xVn2":  "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 
 const users = {
   "firstId": {
@@ -69,12 +84,25 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
+  console.log("req.cookies.user_id", req.cookies.user_id);
+  if(!req.cookies.user_id){
+    res.redirect("/login");
+  }
   let templateVars = {
     urls: urlDatabase,
     users: users[req.cookies.user_id]
   };
   res.render("urls_new", templateVars);
 });
+
+// old one //
+// app.get("/urls/new", (req, res) => {
+//   let templateVars = {
+//     urls: urlDatabase,
+//     users: users[req.cookies.user_id]
+//   };
+//   res.render("urls_new", templateVars);
+// });
 
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
@@ -105,6 +133,15 @@ app.get("/login", (req, res) => {
   };
   res.render("login", templateVars);
 });
+
+// app.get("/u/:id", (req, res) => {
+//   let templateVars = {
+//     urls: urlDatabase,
+//     users: users[req.cookies.user_id]
+//   };
+//   const userUrl = `/u/${urlDatabase.userID}`;
+//   res.render(userUrl, templateVars);
+// });
 
 /////////////////////////
 //    POST hunders    //
