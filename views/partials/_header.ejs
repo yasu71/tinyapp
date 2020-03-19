@@ -11,12 +11,27 @@
       </div>
     </div>
     <div>
-      <form class="form-inline" action="/login" method="POST">
+      <!-- <form class="form-inline" action="/login" method="POST">
         <div class="form-group">
           <input class="form-control" type="text" placeholder="your username" name="username" style="width: 150px;margin-right: 5px;">
           <button type="submit" class="btn btn-secondary">Login</button>
         </div>
-      </form>
+      </form> -->
+      <% if(username === undefined) { %>
+        <form class="form-inline" action="/login" method="POST">
+          <div class="form-group">
+            <input class="form-control" type="text" placeholder="your username" name="username" style="width: 150px;margin-right: 5px;">
+            <button type="submit" class="btn btn-secondary">Login</button>
+          </div>
+        </form>
+      <% } else { %>
+        <form class="form-inline" action="/logout" method="POST">
+          <div class="form-group">
+            <h5 style="margin-bottom:0; margin-right: 5px;">Logged In As: <%= username %></h5>
+              <button type="submit" class="btn btn-secondary">Logout</button>
+          </div>
+        </form>
+      <% } %>
     </div>
-  </nav>
+  </nav> 
 </header>
