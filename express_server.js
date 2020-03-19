@@ -142,20 +142,6 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-
-// const users = { 
-//   "firstId": {
-//     id: "firstId", 
-//     email: "first@example.com", 
-//     password: "123"
-//   },
-//  "secondId": {
-//     id: "secondId", 
-//     email: "second@example.com", 
-//     password: "456"
-//   }
-// }
-
 const findUserByEmail = (email) => {
   for (const userId in users) {
     if (users[userId].email === email) {
