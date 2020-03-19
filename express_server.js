@@ -11,25 +11,42 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-const users = { 
+const users = {
   "firstId": {
-    id: "firstId", 
-    email: "first@example.com", 
+    id: "firstId",
+    email: "first@example.com",
     password: "123"
   },
- "secondId": {
-    id: "secondId", 
-    email: "second@example.com", 
+  "secondId": {
+    id: "secondId",
+    email: "second@example.com",
     password: "456"
   }
-}
+};
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
+
+// generate random strings for short URL and user ID
+function generateRandomString() {
+  return Math.random().toString(36).slice(7);
+}
+
+const findUserByEmail = (email) => {
+  for (const userId in users) {
+    if (users[userId].email === email) {
+      return users[userId];
+    }
+  }
+  return null;
+};
+
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
+
 
 app.get('/', (req, res) => {
   res.send('Hello!');
@@ -44,7 +61,6 @@ app.get('/hello', (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  // let templateVars = { urls: urlDatabase };
   let templateVars = {
     urls: urlDatabase,
     users: users[req.cookies.user_id]
@@ -61,9 +77,9 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { 
-    shortURL: req.params.shortURL, 
-    longURL: urlDatabase[req.params.shortURL], 
+  let templateVars = {
+    shortURL: req.params.shortURL,
+    longURL: urlDatabase[req.params.shortURL],
     users: users[req.cookies.user_id]
   };
   res.render("urls_show", templateVars);
@@ -90,6 +106,9 @@ app.get("/login", (req, res) => {
   res.render("login", templateVars);
 });
 
+/////////////////////////
+//    POST hunders    //
+////////////////////////
 
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
@@ -98,27 +117,21 @@ app.post("/urls", (req, res) => {
   res.redirect("/urls");
 });
 
-function generateRandomString() {
-  return Math.random().toString(36).slice(7);
-}
-
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect("/urls");
 });
-
 
 app.post("/urls/:shortURL/edit", (req, res) => {
   const pageURL = `/urls/${req.params.shortURL}`;
   res.redirect(pageURL);
 });
 
-
 app.post("/urls/:shortURL", (req, res) => {
   let shortURL = req.params.shortURL;
   urlDatabase[shortURL] = req.body.longURL;
-  let templateVars = { 
-    shortURL: shortURL, 
+  let templateVars = {
+    shortURL: shortURL,
     longURL: urlDatabase[req.params.shortURL],
     users: users[req.cookies.user_id]
   };
@@ -132,7 +145,7 @@ app.post("/login", (req, res) => {
     res.status(403).send('Error 403: no data found');
   } else if (user.password !== req.body.password) {
     res.status(403).send('Error 403: no data found');
-  } 
+  }
   res.cookie("user_id", user.id);
   res.redirect("/urls");
 });
@@ -142,26 +155,17 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-const findUserByEmail = (email) => {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
-    } 
-  }
-  return null;
-};
-
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send(`Error 400: Try again`);
   } else if (findUserByEmail(req.body.email)) {
     res.status(400).send(`Error 400: Try again`);
-  } 
+  }
   const newId = generateRandomString();
   users[newId] = {
-    id: newId, 
-    email: req.body.email, 
-    password: req.body.password    
+    id: newId,
+    email: req.body.email,
+    password: req.body.password
   };
   res.cookie("user_id", newId);
   res.redirect("/urls");
