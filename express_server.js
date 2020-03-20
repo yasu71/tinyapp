@@ -57,6 +57,15 @@ const findUserByEmail = (email) => {
   return null;
 };
 
+const urlsForUser = (id) => {
+  const urls = {};
+  for (let key in urlDatabase) {
+    if (id === urlDatabase[key].userID){
+      urls[key] = urlDatabase[key];
+    } 
+  }
+  return urls;
+};
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -76,14 +85,27 @@ app.get('/hello', (req, res) => {
 });
 
 // My URLs page
+
 app.get("/urls", (req, res) => {
-  let templateVars = {
-    urls: urlDatabase,
-    users: users[req.cookies.user_id]
-  };
-  console.log("urlDatabase", urlDatabase);
+  if (users[req.cookies["user_id"]]) {
+    let templateVars = {
+      urls: urlsForUser(users[req.cookies.user_id].id),
+      users: users[req.cookies.user_id] //shows only the urls for logged in user
+    };
   res.render("urls_index", templateVars);
+  }
+  res.redirect("/login");
 });
+
+// old one
+// app.get("/urls", (req, res) => {
+//   let templateVars = {
+//     urls: urlDatabase,
+//     users: users[req.cookies.user_id]
+//   };
+//   console.log("urlDatabase", urlDatabase);
+//   res.render("urls_index", templateVars);
+// });
 
 // Creating a new URL page
 app.get("/urls/new", (req, res) => {
