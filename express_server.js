@@ -107,7 +107,7 @@ app.get("/urls", (req, res) => {
 //   res.render("urls_index", templateVars);
 // });
 
-// Creating a new URL page
+// Page to create a new URL
 app.get("/urls/new", (req, res) => {
   if(!req.cookies.user_id){
     res.redirect("/login");
@@ -208,15 +208,31 @@ app.post("/urls", (req, res) => {
 
 // Delete URL handler
 app.post("/urls/:shortURL/delete", (req, res) => {
-  delete urlDatabase[req.params.shortURL];
-  res.redirect("/urls");
+  if (users[req.cookies.user_id] &&
+    users[req.cookies.user_id].id === urlDatabase[req.params.shortURL].userID) {
+    delete urlDatabase[req.params.shortURL];
+    res.redirect("/urls/");
+  } else {
+    res.redirect("/login");
+  }
 });
 
 // Edit URL handler: redirecting to the edit URL page
 app.post("/urls/:shortURL/edit", (req, res) => {
-  const pageURL = `/urls/${req.params.shortURL}`;
-  res.redirect(pageURL);
+  if (users[req.cookies.user_id] &&
+    users[req.cookies.user_id].id === urlDatabase[req.params.shortURL].userID) {
+    const pageURL = `/urls/${req.params.shortURL}`;
+    res.redirect(pageURL);
+  } else {
+    res.redirect("/login");
+  }
 });
+
+// old one
+// app.post("/urls/:shortURL/edit", (req, res) => {
+//   const pageURL = `/urls/${req.params.shortURL}`;
+//   res.redirect(pageURL);
+// });
 
 // Edit page handler: new URL gets updated in the page
 app.post("/urls/:shortURL", (req, res) => {
