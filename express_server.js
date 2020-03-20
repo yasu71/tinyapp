@@ -1,21 +1,27 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+// const cookieSession = require('cookie-session')
+
 const app = express();
 const PORT = 8080;
 
 app.use(cookieParser());
 app.set("view engine", "ejs");
-
+// app.use(cookieSession({
+//   name: 'tinyApp',
+//   keys: ['key1']
+// }))
 
 const urlDatabase = {
-  "b2xVn2": { 
+  "b2xVn2": {
     shortURL: "b2xVn2",
-    longURL: "http://www.lighthouselabs.ca", 
+    longURL: "http://www.lighthouselabs.ca",
     userID: "aJ48lW"
   },
-  "9sm5xK": { 
+  "9sm5xK": {
     shortURL: "9sm5xK",
-    longURL: "http://www.google.com", 
+    longURL: "http://www.google.com",
     userID: "aJ48lW"
   }
 };
@@ -44,9 +50,9 @@ app.use(bodyParser.urlencoded({extended: true}));
 
 
 // generate random strings for short URL and user ID
-function generateRandomString() {
+const generateRandomString = () => {
   return Math.random().toString(36).slice(7);
-}
+};
 
 const findUserByEmail = (email) => {
   for (const userId in users) {
@@ -57,12 +63,23 @@ const findUserByEmail = (email) => {
   return null;
 };
 
+
+const authenticateUser = (email, pass) => {
+  for (let key in users) {
+    if (email === users[key].email &&
+      bcrypt.compareSync(pass, users[key].password)) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const urlsForUser = (id) => {
   const urls = {};
   for (let key in urlDatabase) {
-    if (id === urlDatabase[key].userID){
+    if (id === urlDatabase[key].userID) {
       urls[key] = urlDatabase[key];
-    } 
+    }
   }
   return urls;
 };
@@ -87,15 +104,17 @@ app.get('/hello', (req, res) => {
 // My URLs page
 
 app.get("/urls", (req, res) => {
-  if (users[req.cookies["user_id"]]) {
+  console.log("users[req.cookies.user_id]", users[req.cookies.user_id]);
+  if (users[req.cookies.user_id]) {
     let templateVars = {
       urls: urlsForUser(users[req.cookies.user_id].id),
       users: users[req.cookies.user_id] //shows only the urls for logged in user
     };
-  res.render("urls_index", templateVars);
+    res.render("urls_index", templateVars);
   }
   res.redirect("/login");
 });
+
 
 // old one
 // app.get("/urls", (req, res) => {
@@ -109,7 +128,7 @@ app.get("/urls", (req, res) => {
 
 // Page to create a new URL
 app.get("/urls/new", (req, res) => {
-  if(!req.cookies.user_id){
+  if (!req.cookies.user_id) {
     res.redirect("/login");
   }
   let templateVars = {
@@ -194,7 +213,7 @@ app.post("/urls", (req, res) => {
     shortURL: shortURL,
     longURL: req.body.longURL,
     userID: req.cookies.user_id
-  }
+  };
   res.redirect("/urls");
 });
 
@@ -246,18 +265,38 @@ app.post("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// login 
+// login
 app.post("/login", (req, res) => {
-  // console.log(req.body);
   const user = findUserByEmail(req.body.email);
-  if (!user) {
-    res.status(403).send('Error 403: no data found');
-  } else if (user.password !== req.body.password) {
-    res.status(403).send('Error 403: no data found');
+  if (authenticateUser(req.body.email, req.body.password)) {
+    res.cookie("user_id", user.id);
+    res.redirect("/urls");
+  } else {
+    res.status(403).send('Error 403: Incorrect email/password');
   }
-  res.cookie("user_id", user.id);
-  res.redirect("/urls");
 });
+
+// const authenticateUser = (email, pass) => {
+//   for (let key in users) {
+//     if (email === users[key].email &&
+//       bcrypt.compareSync(pass, users[key].password)) {
+//       return true;
+//     }
+//   return false;
+//   }
+// };
+
+// old one
+// app.post("/login", (req, res) => {
+//   const user = findUserByEmail(req.body.email);
+//   if (!user) {
+//     res.status(403).send('Error 403: no data found');
+//   } else if (user.password !== req.body.password) {
+//     res.status(403).send('Error 403: no data found');
+//   }
+//   res.cookie("user_id", user.id);
+//   res.redirect("/urls");
+// });
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id", res.cookie.users);
@@ -268,16 +307,32 @@ app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send(`Error 400: Try again`);
   } else if (findUserByEmail(req.body.email)) {
-    res.status(400).send(`Error 400: Try again`);
+    res.status(400).send(`Error 400: Try again, your email alrady exists`);
   }
   const newId = generateRandomString();
   users[newId] = {
     id: newId,
     email: req.body.email,
-    password: req.body.password
+    // password: req.body.password
+    password: bcrypt.hashSync(req.body.password, 10)
   };
+  console.log("bcrypt PW: ", users[newId].password);
   res.cookie("user_id", newId);
   res.redirect("/urls");
 });
 
+// const password = "1234";
+// const salt = bcrypt.genSaltSync(10);
+// const hash = bcrypt.hashSync(password, salt);
+// console.log("original PW: ", password);
+// console.log("hash PW: ", hash);
 
+// const authenticateUser = (email, pass) => {
+//   for (let key in users) {
+//     if (email === users[key].email &&
+//       bcrypt.compareSync(pass, users[key].password)) {
+//       return true;
+//     }
+//   }
+//   return false;
+// };
