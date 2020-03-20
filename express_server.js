@@ -48,15 +48,14 @@ const generateRandomString = () => {
   return Math.random().toString(36).slice(7);
 };
 
-const findUserByEmail = (email) => {
-  for (const userId in users) {
-    if (users[userId].email === email) {
-      return users[userId];
+const findUserByEmail = (email, usersDB) => {
+  for (const userId in usersDB) {
+    if (usersDB[userId].email === email) {
+      return usersDB[userId];
     }
   }
   return null;
 };
-
 
 const authenticateUser = (email, pass) => {
   for (let key in users) {
@@ -68,7 +67,7 @@ const authenticateUser = (email, pass) => {
   return false;
 };
 
-const urlsForUser = (id) => {
+const urlsForUser = (id, urlDatabase) => {
   const urls = {};
   for (let key in urlDatabase) {
     if (id === urlDatabase[key].userID) {
@@ -101,12 +100,14 @@ app.get("/urls", (req, res) => {
   // console.log("users[req.cookies.user_id]", users[req.cookies.user_id]);
   if (users[req.session.user_id]) {
     let templateVars = {
-      urls: urlsForUser(users[req.session.user_id].id),
-      users: users[req.session.user_id] //shows only the urls for logged in user
+      urls: urlsForUser(users[req.session.user_id].id.urlDatabase),
+      users: users[req.session.user_id]
     };
     res.render("urls_index", templateVars);
+  } else {
+    console.log("users[req.session.user_id]", users[req.session.user_id])
+    res.redirect("/login");
   }
-  res.redirect("/login");
 });
 
 
@@ -207,7 +208,7 @@ app.post("/urls", (req, res) => {
     shortURL: shortURL,
     longURL: req.body.longURL,
     userID: req.session.user_id
-  };
+  }
   res.redirect("/urls");
 });
 
@@ -261,26 +262,17 @@ app.post("/urls/:shortURL", (req, res) => {
 
 // login
 app.post("/login", (req, res) => {
-  const user = findUserByEmail(req.body.email);
-  if (authenticateUser(req.body.email, req.body.password)) {
+  const email = req.body.email;
+  const pass = req.body.password;
+  const user = findUserByEmail(email, users);
+  if (authenticateUser(email, pass)) {
+    // req.session.user_id = user;
     req.session.user_id = user.id;
     res.redirect("/urls");
   } else {
     res.status(403).send('Error 403: Incorrect email/password');
   }
 });
-
-// old one
-// app.post("/login", (req, res) => {
-//   const user = findUserByEmail(req.body.email);
-//   if (!user) {
-//     res.status(403).send('Error 403: no data found');
-//   } else if (user.password !== req.body.password) {
-//     res.status(403).send('Error 403: no data found');
-//   }
-//   res.cookie("user_id", user.id);
-//   res.redirect("/urls");
-// });
 
 app.post("/logout", (req, res) => {
   req.session = null;
@@ -291,17 +283,15 @@ app.post("/logout", (req, res) => {
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
     res.status(400).send(`Error 400: Try again`);
-  } else if (findUserByEmail(req.body.email)) {
+  } else if (findUserByEmail(req.body.email, users)) {
     res.status(400).send(`Error 400: Try again, your email alrady exists`);
   }
   const newId = generateRandomString();
   users[newId] = {
     id: newId,
     email: req.body.email,
-    // password: req.body.password
     password: bcrypt.hashSync(req.body.password, 10)
   };
-  console.log("bcrypt PW: ", users[newId].password);
   req.session.user_id = newId;
   res.redirect("/urls");
 });
