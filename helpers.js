@@ -4,10 +4,9 @@ const findUserByEmail = (email, usersDB) => {
       return usersDB[userId].id;
     }
   }
-  return null;
+  return undefined;
 };
 
-
 module.exports = {
-  findUserByEmail
+  findUserByEmail, 
 };
