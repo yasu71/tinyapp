@@ -1,13 +1,11 @@
 const express = require('express');
-// const cookieParser = require('cookie-parser');
 const bcrypt = require('bcrypt');
-const cookieSession = require('cookie-session')
-const { findUserByEmail }= require('./helpers.js')
+const cookieSession = require('cookie-session');
+const { findUserByEmail, generateRandomString } = require('./helpers.js');
 
 const app = express();
 const PORT = 8080;
 
-// app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'tinyApp',
@@ -44,10 +42,10 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 
-// generate random strings for short URL and user ID
-const generateRandomString = () => {
-  return Math.random().toString(36).slice(7);
-};
+// // generate random strings for short URL and user ID
+// const generateRandomString = () => {
+//   return Math.random().toString(36).slice(7);
+// };
 
 const authenticateUser = (email, pass) => {
   for (let key in users) {
