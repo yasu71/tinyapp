@@ -115,12 +115,16 @@ app.get("/urls/new", (req, res) => {
 
 // Editing a URL page handler
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = {
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL,
-    users: users[req.session.user_id]
-  };
-  res.render("urls_show", templateVars);
+  if (req.session.user_id) {
+    let templateVars = {
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      users: users[req.session.user_id]
+    };
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(400).send(`<h3 style="text-align:center">You are not logged in. Please log in and try again. <a href="/login">Go to login page</a></h3><br><h3 style="text-align:center">If you haven't registered yet, <a href="/register">register now</a>!</h3>`);
+  }
 });
 
 // Short URL takes to an actual site handler
