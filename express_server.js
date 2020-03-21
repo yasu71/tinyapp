@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcrypt');
 const cookieSession = require('cookie-session');
-const { findUserByEmail, generateRandomString } = require('./helpers.js');
+const { findUserByEmail } = require('./helpers.js');
 
 const app = express();
 const PORT = 8080;
@@ -10,7 +10,7 @@ app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'tinyApp',
   keys: ['key1']
-}))
+}));
 
 const urlDatabase = {
   "b2xVn2": {
@@ -42,10 +42,9 @@ const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 
 
-// // generate random strings for short URL and user ID
-// const generateRandomString = () => {
-//   return Math.random().toString(36).slice(7);
-// };
+const generateRandomString = () => {
+  return Math.random().toString(36).slice(7);
+};
 
 const authenticateUser = (email, pass) => {
   for (let key in users) {
@@ -67,23 +66,29 @@ const urlsForUser = (userId) => {
   return urls;
 };
 
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
+///////////////////////
+//    GET hunders    //
+///////////////////////
 
-app.get('/', (req, res) => {
-  res.send('Hello!');
-});
-
-app.get('/url.json', (req, res) => {
+// JSON handler for a test purpose
+app.get('/urls.json', (req, res) => {
   res.json(urlDatabase);
 });
 
-app.get('/hello', (req, res) => {
-  res.send("<html><body>Hello <b>World</b></body></html>\n");
+// JSON handler for a test purpose
+app.get("/users.json", (req, res) => {
+  res.json(users);
 });
 
-// My URLs page
+// "/" page redirect to login or My URLs page handler
+app.get('/', (req, res) => {
+  if (req.session.user_id) {
+    res.redirect("/urls");
+  }
+  res.redirect("/login");
+});
+
+// My URLs page handler
 app.get("/urls", (req, res) => {
   if (users[req.session.user_id]) {
     let templateVars = {
@@ -96,7 +101,7 @@ app.get("/urls", (req, res) => {
   }
 });
 
-// Page to create a new URL
+// Page to create a new URL handler
 app.get("/urls/new", (req, res) => {
   if (!req.session.user_id) {
     res.redirect("/login");
@@ -108,7 +113,7 @@ app.get("/urls/new", (req, res) => {
   res.render("urls_new", templateVars);
 });
 
-// Editing/Adding new URL page
+// Editing a URL page handler
 app.get("/urls/:shortURL", (req, res) => {
   let templateVars = {
     shortURL: req.params.shortURL,
@@ -118,13 +123,13 @@ app.get("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// Short URL takes to an actual site
+// Short URL takes to an actual site handler
 app.get("/u/:shortURL", (req, res) => {
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
 
-// register page
+// Register page hander
 app.get("/register", (req, res) => {
   let templateVars = {
     urls: urlDatabase,
@@ -133,7 +138,7 @@ app.get("/register", (req, res) => {
   res.render("register", templateVars);
 });
 
-// login page
+// Login page handler
 app.get("/login", (req, res) => {
   let templateVars = {
     urls: urlDatabase,
@@ -149,12 +154,11 @@ app.get("/login", (req, res) => {
 // My URLs page: new URL is added to the My URLs page
 app.post("/urls", (req, res) => {
   const shortURL = generateRandomString();
-  // saving shortURL data and longURL to the /urls page
   urlDatabase[shortURL] = {
     shortURL: shortURL,
     longURL: req.body.longURL,
     userID: req.session.user_id
-  }
+  };
   res.redirect("/urls");
 });
 
@@ -192,7 +196,7 @@ app.post("/urls/:shortURL", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
-// login
+// login page hander
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const pass = req.body.password;
@@ -201,20 +205,22 @@ app.post("/login", (req, res) => {
     req.session.user_id = user;
     res.redirect("/urls");
   } else {
-    res.status(403).send('Error 403: Incorrect email/password');
+    res.status(403).send(`<h3 style="text-align:center">Incorrect Email/Password. <a href="/login">Go back to login page</a></h3><br><h3 style="text-align:center">If you haven't registered yet, <a href="/register">register now</a>!</h3>`);
   }
 });
 
+// logout hander
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/urls");
 });
 
+// register page handler
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
-    res.status(400).send(`Error 400: Try again`);
+    res.status(400).send(`<h3 style="text-align:center">Missing Email or/and Password. <a href="/register">Go back to register page</a></h3>`);
   } else if (findUserByEmail(req.body.email, users)) {
-    res.status(400).send(`Error 400: Try again, your email alrady exists`);
+    res.status(400).send(`<h3 style="text-align:center">Try again, Email address already exists. <a href="/register">Go back to register page</a></h3>`);
   }
   const newId = generateRandomString();
   users[newId] = {
@@ -224,4 +230,9 @@ app.post("/register", (req, res) => {
   };
   req.session.user_id = newId;
   res.redirect("/urls");
+});
+
+// listens for connections on the given path
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
