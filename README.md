@@ -15,7 +15,6 @@ TinyApp is a full stack web application built with Node and Express that allows 
 
 !["Edit existing URL"](https://github.com/yasu71/tinyapp/blob/master/docs/edit-page.png?raw=true)
 
-
 ## Dependencies
 
 - Node.js
@@ -39,4 +38,4 @@ The app will allow users to shorten long URLs much like TinyURL.com and bit.ly d
 - Type `localhost:8080/` in your browser to open TinyApp
 - Register from register page for the fist time user or login for return user
 - Add URLs from `Create New URL`
-- You can `Edit` or `Delete` added URLs from My URLs page
+- You can `Edit` or `Delete` existing URLs from My URLs page
